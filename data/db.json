@@ -1,0 +1,56 @@
+{
+  "usuarios": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password": "admin123",
+      "rol": "admin"
+    },
+    {
+      "id": 2,
+      "username": "guardia1",
+      "password": "guardia123",
+      "rol": "guardia"
+    },
+    {
+      "id": 3,
+      "username": "guardia2",
+      "password": "guardia123",
+      "rol": "guardia"
+    },
+    {
+      "cedula": "0750299778",
+      "nombres": "Dustin Homar Salinas Suquilanda",
+      "password": "Jedu2001",
+      "rol": "Admin"
+    }
+  ],
+  "registros": [
+    {
+      "id": 1784215515430,
+      "fecha": "2026-07-16",
+      "hora": "10:25 AM",
+      "categoria": "Personal/Vehiculo",
+      "movimiento": "Salida",
+      "nombres": "Guido Cuella",
+      "cedula": "0702471764",
+      "placa": "JU321J",
+      "color": "",
+      "destino": "NA",
+      "razon": "Salida trabajador",
+      "firma": null
+    },
+    {
+      "id": 1784215147571,
+      "fecha": "7/16/2026",
+      "hora": "10:19 AM",
+      "movimiento": "Entrada",
+      "nombres": "Luis Agreda",
+      "cedula": "0703948778",
+      "placa": "JC5140",
+      "destino": "Mina Jorge Jaramillo",
+      "razon": "Trabajador",
+      "firma": "firma_1784215147414.png"
+    }
+  ]
+}

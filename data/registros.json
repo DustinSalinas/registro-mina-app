@@ -1,0 +1,32 @@
+[
+  {
+    "id": 2,
+    "usuario_id": 4,
+    "hora_registro": "2026-07-16T13:45:36.037Z",
+    "movimiento": "Entrada",
+    "nombres": "Jorge",
+    "apellidos": "Jaramillo",
+    "cedula": "0703402743",
+    "placa": "PTM-534",
+    "destino": "Campamento Golcupe",
+    "razon": "Trabajador",
+    "firma_ruta": "/firmas/firma_1784209536034.png",
+    "creado_en": "2026-07-16T13:45:36.037Z",
+    "actualizado_en": "2026-07-16T13:45:36.037Z"
+  },
+  {
+    "id": 3,
+    "usuario_id": 4,
+    "hora_registro": "2026-07-16T14:13:31.851Z",
+    "movimiento": "Entrada",
+    "nombres": "Luis Jose",
+    "apellidos": "Encalada",
+    "cedula": "0750497216",
+    "placa": null,
+    "destino": "Mina Chino",
+    "razon": "Trabajadores",
+    "firma_ruta": "/firmas/firma_1784211211846.png",
+    "creado_en": "2026-07-16T14:13:31.851Z",
+    "actualizado_en": "2026-07-16T14:13:31.851Z"
+  }
+]

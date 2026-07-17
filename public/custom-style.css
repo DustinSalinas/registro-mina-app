@@ -1,0 +1,595 @@
+/* --- PALETA DE COLORES PROFESIONAL (MINERA PIZARRA Y ORO) --- */
+:root {
+    --bg-dark: #0f172a;          /* Fondo Pizarra Oscura */
+    --card-bg: #1e293b;          /* Fondo Tarjeta */
+    --accent-gold: #f59e0b;      /* Amarillo Oro Mina */
+    --accent-gold-hover: #d97706;/* Amarillo Oro hover */
+    --text-main: #f8fafc;        /* Texto Principal Claro */
+    --text-muted: #94a3b8;       /* Texto Secundario/Sutil */
+    --border-color: #334155;     /* Borde Elegante */
+    --success-green: #10b981;    /* Verde para Entrada */
+    --danger-red: #ef4444;       /* Rojo para Salida */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    line-height: 1.6;
+}
+
+/* CONTAINER LOGIN */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+}
+
+.login-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 40px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo-icon {
+    font-size: 3rem;
+    color: var(--accent-gold);
+    margin-bottom: 10px;
+}
+
+.login-header h2 {
+    font-size: 1.5rem;
+    color: var(--text-main);
+    letter-spacing: 1px;
+}
+
+.login-header p {
+    color: var(--accent-gold);
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+/* ELEMENTOS DE FORMULARIO */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 12px 16px;
+    background-color: #0f172a;
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+
+/* BOTONES */
+.btn-primary {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--accent-gold);
+    color: #000000;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-gold-hover);
+}
+
+.btn-secundario {
+    padding: 10px 16px;
+    background-color: var(--border-color);
+    color: var(--text-main);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-secundario:hover {
+    background-color: #475569;
+}
+
+.btn-light {
+    padding: 10px 16px;
+    background-color: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-light:hover {
+    color: var(--text-main);
+    border-color: var(--text-muted);
+}
+
+/* HEADER DEL SISTEMA */
+.main-header {
+    background-color: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 15px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-left h1 {
+    font-size: 1.25rem;
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+.user-badge {
+    font-size: 0.85rem;
+    color: var(--accent-gold);
+}
+
+.btn-logout {
+    padding: 8px 16px;
+    background-color: #ef444422;
+    color: var(--danger-red);
+    border: 1px solid var(--danger-red);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* NAVEGACIÓN */
+.main-nav {
+    display: flex;
+    background-color: #0f172a;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.nav-btn {
+    flex: 1;
+    padding: 15px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    color: var(--text-main);
+    background-color: #1e293b55;
+}
+
+.nav-btn.active {
+    color: var(--accent-gold);
+    border-bottom-color: var(--accent-gold);
+    background-color: var(--card-bg);
+}
+
+/* CONTENIDO PRINCIPAL */
+.main-content {
+    padding: 30px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.form-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.form-card h2 {
+    margin-bottom: 25px;
+    font-size: 1.3rem;
+    border-left: 4px solid var(--accent-gold);
+    padding-left: 12px;
+}
+
+/* DISEÑO GRILLA */
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media(max-width: 768px) {
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* DISEÑO DE FIRMAS */
+.firma-section {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--border-color);
+}
+
+.firma-label {
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 12px;
+}
+
+.firma-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.btn-selector {
+    padding: 8px 16px;
+    background-color: #0f172a;
+    color: var(--text-muted);
+    border: 1.5px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-selector.active {
+    background-color: var(--accent-gold);
+    color: #000;
+    border-color: var(--accent-gold);
+    font-weight: bold;
+}
+
+.firma-container {
+    background-color: #0f172a;
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+}
+
+#canvas-firma {
+    background-color: #f8fafc;
+    border-radius: 4px;
+    max-width: 100%;
+}
+
+.btn-clear {
+    margin-top: 10px;
+    padding: 6px 12px;
+    background: none;
+    border: 1px solid var(--text-muted);
+    color: var(--text-muted);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* HISTORIAL Y FILTROS */
+.filter-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.filter-grid {
+    display: flex;
+    align-items: flex-end;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.report-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.btn-pdf {
+    background-color: var(--success-green);
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.2s ease;
+}
+
+.btn-pdf:hover {
+    opacity: 0.9;
+}
+
+/* TABLA DE REPORTES (PC) */
+.table-responsive {
+    overflow-x: auto;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+}
+
+.tabla-reporte {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.tabla-reporte th {
+    background-color: #0f172a;
+    color: var(--text-main);
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    border-bottom: 2px solid var(--border-color);
+    text-transform: uppercase;
+}
+
+.tabla-reporte td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    color: var(--text-main);
+}
+
+.tabla-reporte tr:hover {
+    background-color: #1e293b88;
+}
+
+/* BADGES PLANOS (SIN EMOJIS) */
+.badge-mov {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.badge-entrada {
+    background-color: #10b98122;
+    color: var(--success-green);
+    border: 1px solid var(--success-green);
+}
+
+.badge-salida {
+    background-color: #ef444422;
+    color: var(--danger-red);
+    border: 1px solid var(--danger-red);
+}
+
+.badge-categoria {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.badge-peaton {
+    background-color: #64748b22;
+    color: #94a3b8;
+    border: 1px solid #64748b;
+}
+
+.badge-vehiculo {
+    background-color: #3b82f622;
+    color: #60a5fa;
+    border: 1px solid #3b82f6;
+}
+
+.badge-volqueta {
+    background-color: #f59e0b22;
+    color: var(--accent-gold);
+    border: 1px solid var(--accent-gold);
+}
+
+/* PLACA ESTILO */
+.placa-style {
+    background-color: #fef08a;
+    color: #854d0e;
+    font-family: monospace;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+/* ESTILO TARJETAS MÓVILES */
+.mobile-cards {
+    display: none;
+}
+
+.card-reporte {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+
+.card-reporte-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.card-reporte-body p {
+    margin-bottom: 6px;
+    color: var(--text-main);
+}
+
+.card-reporte-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-top: 1px solid var(--border-color);
+    margin-top: 12px;
+    padding-top: 10px;
+}
+
+/* BOTONES DE ACCIÓN (EDITAR / BORRAR) */
+.btn-edit-action {
+    background-color: #3b82f622;
+    color: #60a5fa;
+    border: 1px solid #3b82f6;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.btn-edit-action:hover {
+    background-color: #3b82f655;
+}
+
+.btn-delete-action {
+    background-color: #ef444422;
+    color: var(--danger-red);
+    border: 1px solid var(--danger-red);
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.btn-delete-action:hover {
+    background-color: #ef444455;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* MODAL OVERLAY */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    border: 1.5px solid var(--border-color);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 600px;
+    padding: 24px;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
+    animation: scaleUp 0.3s ease;
+}
+
+@keyframes scaleUp {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+}
+
+.btn-close-modal {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.8rem;
+    cursor: pointer;
+}
+
+.btn-close-modal:hover {
+    color: var(--text-main);
+}
+
+/* VISTA DE RESPONSIVIDAD PARA CELULAR */
+@media (max-width: 900px) {
+    .main-header {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    .main-content {
+        padding: 15px;
+    }
+    .table-responsive {
+        display: none; /* Oculta la tabla en móviles */
+    }
+    .mobile-cards {
+        display: block; /* Muestra las tarjetas estructuradas en móviles */
+    }
+}

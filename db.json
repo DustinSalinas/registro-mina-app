@@ -1,0 +1,54 @@
+{
+    "usuarios": [
+        {
+            "cedula": "0750299778",
+            "nombres": "Dustin Homar Salinas Suquilanda",
+            "password": "Jedu2001",
+            "rol": "Admin"
+        }
+    ],
+    "registros": [
+        {
+            "id": 1,
+            "fecha": "2026-07-16",
+            "hora": "06:29 AM",
+            "categoria": "Vehiculo",
+            "movimiento": "Entrada",
+            "cedula": "0702275850",
+            "nombres": "VALDIVIEZO MENDOZA VICENTE",
+            "placa": "KM132H",
+            "color": "NA",
+            "destino": "Mina Cobre",
+            "razon": "Trabajador",
+            "firma": null
+        },
+        {
+            "id": 2,
+            "fecha": "2026-07-16",
+            "hora": "06:49 AM",
+            "categoria": "Vehiculo",
+            "movimiento": "Entrada",
+            "cedula": "0702471764",
+            "nombres": "COELLO ZUMBA GUIDO RENE",
+            "placa": "JU321J",
+            "color": "NA",
+            "destino": "Mina",
+            "razon": "Trabajador",
+            "firma": "firma_1784228887859_0702471764.png"
+        },
+        {
+            "id": 3,
+            "fecha": "2026-07-16",
+            "hora": "02:08 PM",
+            "categoria": "Vehiculo",
+            "movimiento": "Entrada",
+            "cedula": "0703402743",
+            "nombres": "JARAMILLO ORTIZ JORGE ALBERTO",
+            "placa": "PTM534",
+            "color": "NA",
+            "destino": "Campamento Golcupe",
+            "razon": "Dueño Mina",
+            "firma": "firma_1784229282414_0703402743.png"
+        }
+    ]
+}

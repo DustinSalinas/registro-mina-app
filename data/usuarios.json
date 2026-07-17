@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "nombre": "Administrador",
+    "usuario": "admin",
+    "contrasena": "admin123",
+    "rol": "admin"
+  },
+  {
+    "id": 2,
+    "nombre": "Guardia 1",
+    "usuario": "guardia1",
+    "contrasena": "guardia123",
+    "rol": "guardia"
+  },
+  {
+    "id": 3,
+    "nombre": "Guardia 2",
+    "usuario": "guardia2",
+    "contrasena": "guardia123",
+    "rol": "guardia"
+  },
+  {
+    "id": 4,
+    "nombre": "Dustin Homar Salinas Suquilanda",
+    "usuario": "0750299778",
+    "contrasena": "Jedu2001",
+    "rol": "guardia"
+  }
+]

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Control de Acceso - Mina</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-blue-600 text-white rounded-lg shadow-md shadow-blue-200">
+                    <i data-lucide="shield" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-slate-900 tracking-tight">CONTROL DE ACCESO</h1>
+                    <p class="text-xs text-slate-500 font-medium">Registro de Seguridad de Mina</p>
+                </div>
+            </div>
+            <div id="userInfo" class="hidden flex items-center space-x-4">
+                <div class="text-right hidden sm:block">
+                    <p id="userNombres" class="text-sm font-semibold text-slate-800"></p>
+                    <span id="userRol" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200"></span>
+                </div>
+                <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200" title="Cerrar Sesión">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- Notificación verde -->
+        <div id="notificacion" class="hidden fixed top-20 right-6 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2 transition-all duration-300">
+            <i data-lucide="check-circle" class="w-5 h-5"></i>
+            <span id="textoNotificacion"></span>
+        </div>
+
+        <!-- Login -->
+        <section id="loginSection" class="max-w-md mx-auto my-12 bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
+            <div class="text-center mb-8">
+                <div class="inline-flex p-3 bg-blue-50 text-blue-600 rounded-2xl mb-3">
+                    <i data-lucide="lock" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">Iniciar Sesión</h2>
+                <p class="text-slate-500 text-sm mt-1">Ingresa tus credenciales de control</p>
+            </div>
+            <form id="loginForm" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Cédula / Usuario</label>
+                    <div class="relative">
+                        <i data-lucide="user" class="absolute left-3 top-3 w-5 h-5 text-slate-400"></i>
+                        <input type="text" id="loginUsername" required class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900" placeholder="Ej. 0750299778">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Contraseña</label>
+                    <div class="relative">
+                        <i data-lucide="key-round" class="absolute left-3 top-3 w-5 h-5 text-slate-400"></i>
+                        <input type="password" id="loginPassword" required class="w-full pl-10 pr-12 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900" placeholder="••••••••">
+                        <button type="button" onclick="togglePasswordVisibility('loginPassword', 'eyeIconLogin')" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600 focus:outline-none">
+                            <i id="eyeIconLogin" data-lucide="eye" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 hover:-translate-y-0.5">
+                    Ingresar al Sistema
+                </button>
+            </form>
+        </section>
+
+        <!-- App principal -->
+        <section id="appSection" class="hidden space-y-6">
+
+            <div class="flex border-b border-slate-200 bg-white rounded-xl p-1 shadow-sm">
+                <button onclick="switchTab('registro')" id="tab-registro" class="flex-1 py-3 px-4 rounded-lg text-sm font-semibold flex justify-center items-center gap-2 bg-blue-600 text-white transition-all">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i> Nuevo Registro
+                </button>
+                <button onclick="switchTab('lista')" id="tab-lista" class="flex-1 py-3 px-4 rounded-lg text-sm font-semibold flex justify-center items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all">
+                    <i data-lucide="file-text" class="w-4 h-4"></i> Historial de Accesos
+                </button>
+                <button onclick="switchTab('usuarios')" id="tab-usuarios" class="hidden flex-1 py-3 px-4 rounded-lg text-sm font-semibold flex justify-center items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all">
+                    <i data-lucide="users" class="w-4 h-4"></i> Gestionar Usuarios
+                </button>
+            </div>
+
+            <!-- REGISTRO -->
+            <div id="pane-registro" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <form id="registroForm" class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-6 flex flex-col">
+                    <div class="border-b border-slate-100 pb-4">
+                        <h3 class="text-lg font-bold text-slate-900">Formulario de Control de Acceso</h3>
+                        <p class="text-sm text-slate-500">Completa los campos obligatorios para guardar el acceso.</p>
+                    </div>
+
+                    <!-- Fecha y Hora manuales -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Fecha</label>
+                            <input type="date" id="fecha" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Hora</label>
+                            <input type="time" id="hora" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Categoría</label>
+                            <select id="categoria" onchange="toggleCategoria()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900 font-medium">
+                                <option value="Peaton">Peatón</option>
+                                <option value="Vehiculo">Vehículo</option>
+                                <option value="Volqueta">Volqueta</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Movimiento</label>
+                            <select id="movimiento" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900 font-medium">
+                                <option value="Entrada">Entrada</option>
+                                <option value="Salida">Salida</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Cédula</label>
+                            <div class="relative">
+                                <input type="text" id="cedula" required pattern="[0-9]*" inputmode="numeric" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900" placeholder="Solo números...">
+                                <span id="loadingCedula" class="hidden absolute right-3 top-3 text-blue-500 text-xs font-medium">Buscando...</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Nombres Completos</label>
+                            <input type="text" id="nombres" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900" placeholder="Nombre de la persona">
+                        </div>
+                    </div>
+
+                    <div id="seccionVehiculo" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-150">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Placa Vehículo / Volqueta</label>
+                            <input type="text" id="placa" class="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900 uppercase" placeholder="ABC-1234" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9\-]/g, '')">
+                        </div>
+                        <div id="contenedorColor" class="hidden">
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Color de la Volqueta</label>
+                            <input type="text" id="color" class="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900" placeholder="Ej. Amarillo">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Destino Interno</label>
+                            <input type="text" id="destino" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900" placeholder="Ej. Campamento / Oficina">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Razón de Visita</label>
+                            <input type="text" id="razon" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900" placeholder="Ej. Retiro material">
+                        </div>
+                    </div>
+
+                    <!-- PANEL DE FIRMA -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col space-y-4">
+                        <div>
+                            <h3 class="text-md font-bold text-slate-900">Firma Obligatoria</h3>
+                            <p class="text-xs text-slate-500">Dibuja la firma o sube una imagen.</p>
+                        </div>
+                        <div id="contenedorFirmaVisual" class="border border-slate-200 rounded-xl bg-slate-50 overflow-hidden relative flex-grow flex items-center justify-center" style="min-height: 200px;">
+                            <canvas id="signature-pad" class="w-full h-full cursor-crosshair bg-white"></canvas>
+                            <img id="vistaFirmaSubida" class="hidden absolute inset-0 w-full h-full object-contain bg-white" src="" alt="Firma Subida">
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <button type="button" onclick="clearSignature()" class="w-full py-2 px-3 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 flex justify-center items-center gap-1.5 transition">
+                                <i data-lucide="eraser" class="w-3.5 h-3.5"></i> Limpiar Firma / Volver a dibujar
+                            </button>
+                            <div class="relative">
+                                <input type="file" id="subirFirmaInput" accept="image/*" onchange="cargarFirmaDesdeImagen(event)" class="hidden">
+                                <button type="button" onclick="document.getElementById('subirFirmaInput').click()" class="w-full py-2 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-semibold flex justify-center items-center gap-1.5 transition">
+                                    <i data-lucide="upload" class="w-3.5 h-3.5"></i> Cargar Imagen de Firma
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-blue-100 transition duration-200">
+                        Guardar Registro de Acceso
+                    </button>
+                </form>
+            </div>
+
+            <!-- HISTORIAL -->
+            <div id="pane-lista" class="hidden bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-4">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">Historial de Accesos Registrados</h3>
+                        <p class="text-sm text-slate-500">Monitoreo de entradas y salidas.</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                        <div class="flex items-center gap-2">
+                            <input type="date" id="fechaDesde" onchange="aplicarFiltros()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm" title="Desde">
+                            <span class="text-slate-400 text-sm">a</span>
+                            <input type="date" id="fechaHasta" onchange="aplicarFiltros()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm" title="Hasta">
+                        </div>
+                        <input type="text" id="searchInput" oninput="aplicarFiltros()" class="flex-grow md:w-48 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Buscar texto...">
+                        <button onclick="aplicarFiltros()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition">Filtrar</button>
+                        <button onclick="generarPDF()" class="px-5 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-xl text-sm font-bold flex items-center gap-2 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-95">
+                            <i data-lucide="download" class="w-4 h-4"></i> Generar PDF
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs font-semibold">
+                            <tr>
+                                <th class="px-4 py-3">ID</th>
+                                <th class="px-4 py-3">Fecha / Hora</th>
+                                <th class="px-4 py-3">Categoría</th>
+                                <th class="px-4 py-3">Movimiento</th>
+                                <th class="px-4 py-3">Identidad</th>
+                                <th class="px-4 py-3">Placa / Color</th>
+                                <th class="px-4 py-3">Destino / Razón</th>
+                                <th class="px-4 py-3">Firma</th>
+                                <th class="px-4 py-3 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaRegistros" class="divide-y divide-slate-150"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- GESTIÓN USUARIOS -->
+            <div id="pane-usuarios" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6">
+                <form id="userForm" class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">Agregar Personal</h3>
+                        <p class="text-sm text-slate-500">Crea nuevos operarios o administradores.</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Cédula</label>
+                        <input type="text" id="uCedula" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Nombre Completo</label>
+                        <input type="text" id="uNombres" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Contraseña</label>
+                        <div class="relative">
+                            <input type="password" id="uPassword" required class="w-full pl-3 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500">
+                            <button type="button" onclick="togglePasswordVisibility('uPassword', 'eyeIconUser')" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 focus:outline-none">
+                                <i id="eyeIconUser" data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Rol</label>
+                        <select id="uRol" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 text-slate-900">
+                            <option value="Operador">Operador</option>
+                            <option value="Admin">Administrador</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-sm shadow transition duration-200">
+                        Registrar Usuario
+                    </button>
+                </form>
+
+                <div class="md:col-span-2 bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">Personal Autorizado</h3>
+                        <p class="text-sm text-slate-500">Usuarios con acceso al sistema.</p>
+                    </div>
+                    <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                        <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-500 font-semibold uppercase text-xs">
+                                <tr>
+                                    <th class="px-4 py-3">Cédula</th>
+                                    <th class="px-4 py-3">Nombres</th>
+                                    <th class="px-4 py-3">Rol</th>
+                                    <th class="px-4 py-3 text-center">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaUsuarios" class="divide-y divide-slate-150"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400">
+            &copy; 2026 Registro Mina App - Sistema Profesional.
+        </div>
+    </footer>
+
+    <!-- Modal Firma -->
+    <div id="modalFirma" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 flex flex-col items-center">
+            <h4 class="font-bold text-slate-900 mb-4 text-center">Firma Registrada</h4>
+            <div class="border border-slate-200 rounded-xl bg-slate-50 p-2 w-full mb-4">
+                <img id="imgFirmaModal" class="w-full h-auto max-h-48 object-contain" src="" alt="Firma">
+            </div>
+            <button onclick="cerrarModal()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition">
+                Cerrar Ventana
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Editar Usuario -->
+    <div id="modalEditarUsuario" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl border border-slate-100 space-y-4">
+            <h4 class="text-lg font-bold text-slate-900">Editar Usuario</h4>
+            <input type="hidden" id="editCedulaOriginal">
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Cédula</label>
+                <input type="text" id="editCedulaNueva" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Nombre Completo</label>
+                <input type="text" id="editNombres" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Contraseña (dejar vacío para no cambiar)</label>
+                <input type="password" id="editPassword" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Rol</label>
+                <select id="editRol" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 text-slate-900">
+                    <option value="Operador">Operador</option>
+                    <option value="Admin">Administrador</option>
+                </select>
+            </div>
+            <div class="flex gap-2 justify-end">
+                <button onclick="cerrarModalEditar()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition">Cancelar</button>
+                <button onclick="guardarEdicionUsuario()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Registro -->
+    <div id="modalEditarRegistro" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-2xl border border-slate-100 space-y-4">
+            <h4 class="text-lg font-bold text-slate-900">Editar Registro</h4>
+            <input type="hidden" id="editRegistroId">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Categoría</label>
+                    <select id="editCategoria" onchange="toggleEditCategoria()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900 font-medium">
+                        <option value="Peaton">Peatón</option>
+                        <option value="Vehiculo">Vehículo</option>
+                        <option value="Volqueta">Volqueta</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Movimiento</label>
+                    <select id="editMovimiento" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900 font-medium">
+                        <option value="Entrada">Entrada</option>
+                        <option value="Salida">Salida</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Cédula</label>
+                    <input type="text" id="editCedula" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Nombres Completos</label>
+                    <input type="text" id="editNombresReg" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900">
+                </div>
+                <div id="editSeccionVehiculo" class="hidden sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-150">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Placa Vehículo / Volqueta</label>
+                        <input type="text" id="editPlaca" class="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900 uppercase" placeholder="ABC-1234" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9\-]/g, '')">
+                    </div>
+                    <div id="editContenedorColor" class="hidden">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Color de la Volqueta</label>
+                        <input type="text" id="editColor" class="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Destino Interno</label>
+                    <input type="text" id="editDestino" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Razón de Visita</label>
+                    <input type="text" id="editRazon" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900">
+                </div>
+            </div>
+            <p class="text-xs text-slate-500">* La firma no se puede modificar desde este panel.</p>
+            <div class="flex gap-2 justify-end">
+                <button onclick="cerrarModalEditarRegistro()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition">Cancelar</button>
+                <button onclick="guardarEdicionRegistro()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
