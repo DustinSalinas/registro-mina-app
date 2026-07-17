@@ -17,10 +17,11 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('fecha').value = `${yyyy}-${mm}-${dd}`;
     document.getElementById('hora').value = `${hh}:${min}`;
 
-    // --- Listener para cambio de fecha ---
+    // --- Listener para cuando el usuario CAMBIA la fecha manualmente ---
     document.getElementById('fecha').addEventListener('change', function() {
         const cedula = document.getElementById('cedula').value.trim();
         if (cedula.length === 10) {
+            // Al cambiar la fecha, se consulta con esa fecha específica
             autocompletar(cedula, this.value);
         }
     });
@@ -174,7 +175,7 @@ function toggleEditCategoria() {
     }
 }
 
-/* ---- Autocompletar (nueva función central) ---- */
+/* ---- Autocompletar (función central) ---- */
 async function autocompletar(cedula, fecha = null) {
     const loading = document.getElementById('loadingCedula');
     loading.classList.remove('hidden');
@@ -226,12 +227,12 @@ async function autocompletar(cedula, fecha = null) {
     }
 }
 
-/* ---- Autocompletar al escribir la cédula (se usa la fecha actual del campo) ---- */
+/* ---- Autocompletar al escribir la cédula (SIEMPRE sin filtrar por fecha) ---- */
 async function detectarCedulaCompleta() {
     const cedula = document.getElementById('cedula').value.trim();
     if (cedula.length === 10) {
-        const fecha = document.getElementById('fecha').value;
-        await autocompletar(cedula, fecha);
+        // **CORRECCIÓN: se envía null para que NO filtre por fecha**
+        await autocompletar(cedula, null);
     }
 }
 
@@ -553,9 +554,6 @@ document.getElementById('formUsuario').addEventListener('submit', async (e) => {
 });
 
 function abrirEditarUsuario(cedula) {
-    // Cargar datos del usuario en el modal
-    // Por simplicidad, se puede pedir al servidor o buscar en la tabla
-    // Implementación rápida: buscamos en la tabla actual
     const filas = document.querySelectorAll('#tablaUsuarios tr');
     let datos = null;
     filas.forEach(tr => {
