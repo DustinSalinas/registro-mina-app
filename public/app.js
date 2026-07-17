@@ -16,6 +16,15 @@ window.addEventListener('DOMContentLoaded', () => {
     const min = String(now.getMinutes()).padStart(2, '0');
     document.getElementById('fecha').value = `${yyyy}-${mm}-${dd}`;
     document.getElementById('hora').value = `${hh}:${min}`;
+
+    // --- Listener para cambio de fecha ---
+    document.getElementById('fecha').addEventListener('change', function() {
+        const cedula = document.getElementById('cedula').value.trim();
+        if (cedula.length === 10) {
+            autocompletar(cedula, this.value);
+        }
+    });
+
     const saved = localStorage.getItem('currentUser');
     if (saved) {
         try {
@@ -165,54 +174,64 @@ function toggleEditCategoria() {
     }
 }
 
-/* ---- Autocompletar cédula (carga firma anterior) ---- */
-async function detectarCedulaCompleta() {
-    const cedulaInput = document.getElementById('cedula');
+/* ---- Autocompletar (nueva función central) ---- */
+async function autocompletar(cedula, fecha = null) {
     const loading = document.getElementById('loadingCedula');
-    const cedula = cedulaInput.value.trim();
-    if (cedula.length === 10) {
-        loading.classList.remove('hidden');
-        try {
-            const res = await fetch(`/api/autocompletar?cedula=${cedula}`);
-            const data = await res.json();
-            if (data) {
-                document.getElementById('nombres').value = data.nombres;
-                document.getElementById('categoria').value = data.categoria;
-                toggleCategoria();
-                if (data.categoria === 'Vehiculo' || data.categoria === 'Volqueta') {
-                    document.getElementById('placa').value = data.placa;
-                    if (data.categoria === 'Volqueta') {
-                        document.getElementById('color').value = data.color;
-                    }
-                }
-                document.getElementById('destino').value = data.destino;
-                document.getElementById('razon').value = data.razon;
-
-                if (data.firma) {
-                    try {
-                        const resFirma = await fetch(`/firmas/${data.firma}`);
-                        const blob = await resFirma.blob();
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                            firmaCargadaBase64 = reader.result;
-                            const vista = document.getElementById('vistaFirmaSubida');
-                            vista.src = firmaCargadaBase64;
-                            vista.classList.remove('hidden');
-                            signaturePad.clear();
-                        };
-                        reader.readAsDataURL(blob);
-                    } catch (e) {
-                        console.error('No se pudo cargar la firma anterior', e);
-                    }
-                } else {
-                    clearSignature();
+    loading.classList.remove('hidden');
+    try {
+        let url = `/api/autocompletar?cedula=${cedula}`;
+        if (fecha) {
+            url += `&fecha=${fecha}`;
+        }
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data) {
+            document.getElementById('nombres').value = data.nombres || '';
+            document.getElementById('categoria').value = data.categoria || '';
+            toggleCategoria();
+            if (data.categoria === 'Vehiculo' || data.categoria === 'Volqueta') {
+                document.getElementById('placa').value = data.placa || '';
+                if (data.categoria === 'Volqueta') {
+                    document.getElementById('color').value = data.color || '';
                 }
             }
-        } catch (e) {
-            console.error(e);
-        } finally {
-            loading.classList.add('hidden');
+            document.getElementById('destino').value = data.destino || '';
+            document.getElementById('razon').value = data.razon || '';
+
+            // Cargar firma si existe
+            if (data.firma) {
+                try {
+                    const resFirma = await fetch(`/firmas/${data.firma}`);
+                    const blob = await resFirma.blob();
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        firmaCargadaBase64 = reader.result;
+                        const vista = document.getElementById('vistaFirmaSubida');
+                        vista.src = firmaCargadaBase64;
+                        vista.classList.remove('hidden');
+                        signaturePad.clear();
+                    };
+                    reader.readAsDataURL(blob);
+                } catch (e) {
+                    console.error('No se pudo cargar la firma anterior', e);
+                }
+            } else {
+                clearSignature();
+            }
         }
+    } catch (e) {
+        console.error(e);
+    } finally {
+        loading.classList.add('hidden');
+    }
+}
+
+/* ---- Autocompletar al escribir la cédula (se usa la fecha actual del campo) ---- */
+async function detectarCedulaCompleta() {
+    const cedula = document.getElementById('cedula').value.trim();
+    if (cedula.length === 10) {
+        const fecha = document.getElementById('fecha').value;
+        await autocompletar(cedula, fecha);
     }
 }
 
@@ -481,159 +500,23 @@ function cerrarModal() {
     document.getElementById('modalFirma').classList.add('hidden');
 }
 
-/* ---- Generar PDF (CORREGIDO) ---- */
-async function generarPDF() {
-    if (!currentUser) return;
-
-    const tbody = document.getElementById('tablaRegistros');
-    const trs = tbody.querySelectorAll('tr');
-    if (trs.length === 0) {
-        alert('No hay registros para exportar.');
-        return;
-    }
-
-    const filas = [];
-    for (const tr of trs) {
-        const celdas = tr.querySelectorAll('td');
-        if (celdas.length < 9) continue;
-
-        const id = celdas[0].innerText.trim();
-        const fechaHoraTexto = celdas[1].innerText.trim().replace(/\n/g, ' ');
-        const movimiento = celdas[3].innerText.trim();
-        const identidadDivs = celdas[4].querySelectorAll('div');
-        const nombreCompleto = identidadDivs[0] ? identidadDivs[0].innerText.trim() : '';
-        const cedulaTexto = identidadDivs[1] ? identidadDivs[1].innerText.replace('CI: ','').trim() : '';
-        const placaSpan = celdas[5].querySelector('.font-semibold');
-        const placa = placaSpan ? placaSpan.innerText.trim() : '—';
-        const destinoDiv = celdas[6].querySelector('.font-medium');
-        const destino = destinoDiv ? destinoDiv.innerText.trim() : '';
-        const razonDiv = celdas[6].querySelector('.italic');
-        const razon = razonDiv ? razonDiv.innerText.replace(/"/g, '').trim() : '';
-        const btnFirma = celdas[7].querySelector('button');
-        let firmaArchivo = null;
-        if (btnFirma && btnFirma.getAttribute('onclick')) {
-            const match = btnFirma.getAttribute('onclick').match(/verFirma\('(.+?)'\)/);
-            if (match) firmaArchivo = match[1];
-        }
-
-        filas.push({ id, fechaHora: fechaHoraTexto, movimiento, nombreCompleto, cedula: cedulaTexto, placa, destino, razon, firmaArchivo });
-    }
-
-    const firmasImg = {};
-    for (const fila of filas) {
-        if (fila.firmaArchivo && !firmasImg[fila.firmaArchivo]) {
-            try {
-                const res = await fetch(`/firmas/${fila.firmaArchivo}`);
-                const blob = await res.blob();
-                const dataUrl = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(blob);
-                });
-                firmasImg[fila.firmaArchivo] = dataUrl;
-            } catch (e) {
-                firmasImg[fila.firmaArchivo] = null;
-            }
-        }
-    }
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    doc.setFontSize(16);
-    doc.text('Registro de Accesos - Mina', 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Generado: ${new Date().toLocaleString()}`, 14, 28);
-    doc.text(`Registrado por: ${currentUser.nombres}`, 14, 34);
-
-    const headers = ['ID', 'Fecha/Hora', 'Movimiento', 'Nombre y Apellidos', 'Cédula', 'Placa Vehículo', 'Destino', 'Razón Ingreso/Salida', 'Firma'];
-
-    const body = filas.map(f => [
-        f.id, f.fechaHora, f.movimiento, f.nombreCompleto, f.cedula, f.placa, f.destino, f.razon,
-        f.firmaArchivo ? ' ' : 'No Firma'
-    ]);
-
-    doc.autoTable({
-        startY: 42,
-        head: [headers],
-        body: body,
-        styles: {
-            fontSize: 7,
-            cellPadding: 1.5,
-            overflow: 'linebreak',
-            lineWidth: 0.1,
-            lineColor: [200, 200, 200],
-            fillColor: [255, 255, 255]
-        },
-        headStyles: {
-            fillColor: [37, 99, 235],
-            textColor: [255, 255, 255],
-            fontStyle: 'bold'
-        },
-        columnStyles: {
-            0: { cellWidth: 10 },
-            1: { cellWidth: 24 },
-            2: { cellWidth: 18 },
-            3: { cellWidth: 28 },
-            4: { cellWidth: 20 },
-            5: { cellWidth: 22 },
-            6: { cellWidth: 22 },
-            7: { cellWidth: 24 },
-            8: { cellWidth: 22 }
-        },
-        didDrawCell: function(data) {
-            if (data.row.section !== 'body') return;
-            if (data.column.index === 8) {
-                const filaIndex = data.row.index;
-                const firmaArchivo = filas[filaIndex] ? filas[filaIndex].firmaArchivo : null;
-                if (firmaArchivo && firmasImg[firmaArchivo]) {
-                    const cell = data.cell;
-                    const x = cell.x + 1;
-                    const y = cell.y + 1;
-                    const w = cell.width - 2;
-                    const h = cell.height - 2;
-                    try {
-                        doc.addImage(firmasImg[firmaArchivo], 'PNG', x, y, w, h);
-                    } catch (e) { /* fallback */ }
-                }
-            }
-        }
-    });
-
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const hh = String(now.getHours()).padStart(2, '0');
-    const min = String(now.getMinutes()).padStart(2, '0');
-    const ss = String(now.getSeconds()).padStart(2, '0');
-    const filename = `${yyyy}${mm}${dd}_${hh}${min}${ss}_Reporte.pdf`;
-    doc.save(filename);
-}
-
-/* ---- Gestión de Usuarios ---- */
+/* ---- Gestión de Usuarios (solo Admin) ---- */
 async function cargarUsuarios() {
     try {
         const res = await fetch('/api/admin/usuarios');
-        const users = await res.json();
+        const usuarios = await res.json();
         const tbody = document.getElementById('tablaUsuarios');
         tbody.innerHTML = '';
-
-        users.forEach((u, index) => {
+        usuarios.forEach((u, idx) => {
             const tr = document.createElement('tr');
-            tr.className = (index % 2 === 0) ? 'bg-white hover:bg-slate-50' : 'bg-slate-50 hover:bg-slate-100';
-            const botonEliminar = `<button onclick="${u.cedula === '0750299778' ? 'eliminarUsuarioPrincipal()' : `eliminarUsuario('${u.cedula}')`}" class="p-1 text-red-500 hover:bg-red-50 rounded transition" title="Eliminar"><i data-lucide="user-x" class="w-4 h-4"></i></button>`;
+            tr.className = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
             tr.innerHTML = `
-                <td class="px-4 py-3 text-slate-700 font-medium">${u.cedula}</td>
-                <td class="px-4 py-3 text-slate-800 font-bold">${u.nombres}</td>
-                <td class="px-4 py-3"><span class="px-2 py-0.5 text-xs font-semibold rounded bg-slate-100 text-slate-700">${u.rol}</span></td>
+                <td class="px-4 py-3 font-medium text-slate-800">${u.cedula}</td>
+                <td class="px-4 py-3 text-slate-700">${u.nombres}</td>
+                <td class="px-4 py-3"><span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${u.rol === 'Admin' ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-800'}">${u.rol}</span></td>
                 <td class="px-4 py-3 text-center">
-                    <div class="flex justify-center items-center gap-2">
-                        <button onclick="abrirEditarUsuario('${u.cedula}', '${u.nombres.replace(/'/g, "\\'")}', '${u.rol}')" class="p-1 text-blue-500 hover:bg-blue-50 rounded transition" title="Editar">
-                            <i data-lucide="pencil" class="w-4 h-4"></i>
-                        </button>
-                        ${botonEliminar}
-                    </div>
+                    <button onclick="abrirEditarUsuario('${u.cedula}')" class="text-blue-500 hover:text-blue-700 p-1"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                    <button onclick="eliminarUsuario('${u.cedula}')" class="text-red-500 hover:text-red-700 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -642,88 +525,99 @@ async function cargarUsuarios() {
     } catch (e) { console.error(e); }
 }
 
-function eliminarUsuarioPrincipal() {
-    alert('No se puede eliminar el usuario principal del sistema.');
-}
-
-function abrirEditarUsuario(cedula, nombres, rol) {
-    document.getElementById('editCedulaOriginal').value = cedula;
-    document.getElementById('editCedulaNueva').value = cedula;
-    document.getElementById('editNombres').value = nombres;
-    document.getElementById('editPassword').value = '';
-    document.getElementById('editRol').value = rol;
-    document.getElementById('modalEditarUsuario').classList.remove('hidden');
-}
-
-function cerrarModalEditar() {
-    document.getElementById('modalEditarUsuario').classList.add('hidden');
-}
-
-async function guardarEdicionUsuario() {
-    const cedulaOriginal = document.getElementById('editCedulaOriginal').value;
-    const cedulaNueva = document.getElementById('editCedulaNueva').value.trim();
-    const nombres = document.getElementById('editNombres').value.trim();
-    const password = document.getElementById('editPassword').value;
-    const rol = document.getElementById('editRol').value;
-
-    if (!cedulaNueva) {
-        alert('La cédula no puede estar vacía.');
+document.getElementById('formUsuario').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const cedula = document.getElementById('nuevoCedula').value.trim();
+    const nombres = document.getElementById('nuevoNombres').value.trim();
+    const password = document.getElementById('nuevoPassword').value;
+    const rol = document.getElementById('nuevoRol').value;
+    if (!cedula || !nombres || !password) {
+        alert('Todos los campos son obligatorios');
         return;
     }
-
-    const body = { nombres, rol, cedula: cedulaNueva };
-    if (password.trim() !== '') body.password = password;
-
-    try {
-        const res = await fetch(`/api/admin/usuarios/${cedulaOriginal}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-        if (res.ok) {
-            mostrarNotificacion('Usuario actualizado correctamente');
-            cerrarModalEditar();
-            cargarUsuarios();
-            if (currentUser && currentUser.cedula === cedulaOriginal) {
-                currentUser.cedula = cedulaNueva;
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            }
-        } else {
-            const err = await res.json();
-            alert(err.error || 'Error al actualizar.');
-        }
-    } catch (e) { console.error(e); }
-}
-
-document.getElementById('userForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const body = {
-        cedula: document.getElementById('uCedula').value,
-        nombres: document.getElementById('uNombres').value,
-        password: document.getElementById('uPassword').value,
-        rol: document.getElementById('uRol').value
-    };
     try {
         const res = await fetch('/api/admin/usuarios', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
+            body: JSON.stringify({ cedula, nombres, password, rol })
         });
         if (res.ok) {
-            mostrarNotificacion('Usuario registrado correctamente');
-            document.getElementById('userForm').reset();
+            mostrarNotificacion('Usuario creado');
+            document.getElementById('formUsuario').reset();
             cargarUsuarios();
         } else {
             const err = await res.json();
-            alert(err.error || 'No se pudo crear.');
+            alert(err.error || 'Error al crear usuario');
+        }
+    } catch (e) { console.error(e); }
+});
+
+function abrirEditarUsuario(cedula) {
+    // Cargar datos del usuario en el modal
+    // Por simplicidad, se puede pedir al servidor o buscar en la tabla
+    // Implementación rápida: buscamos en la tabla actual
+    const filas = document.querySelectorAll('#tablaUsuarios tr');
+    let datos = null;
+    filas.forEach(tr => {
+        const tds = tr.querySelectorAll('td');
+        if (tds.length && tds[0].textContent.trim() === cedula) {
+            datos = {
+                cedula: tds[0].textContent.trim(),
+                nombres: tds[1].textContent.trim(),
+                rol: tds[2].textContent.trim()
+            };
+        }
+    });
+    if (!datos) {
+        alert('Usuario no encontrado');
+        return;
+    }
+    document.getElementById('editUsuarioCedula').value = datos.cedula;
+    document.getElementById('editUsuarioNombres').value = datos.nombres;
+    document.getElementById('editUsuarioRol').value = datos.rol;
+    document.getElementById('editUsuarioPassword').value = '';
+    document.getElementById('modalEditarUsuario').classList.remove('hidden');
+}
+
+function cerrarModalEditarUsuario() {
+    document.getElementById('modalEditarUsuario').classList.add('hidden');
+}
+
+document.getElementById('formEditarUsuario').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const cedulaOriginal = document.getElementById('editUsuarioCedula').value;
+    const nuevas = {
+        cedula: document.getElementById('editUsuarioNuevoCedula').value.trim() || cedulaOriginal,
+        nombres: document.getElementById('editUsuarioNombres').value.trim(),
+        rol: document.getElementById('editUsuarioRol').value,
+        password: document.getElementById('editUsuarioPassword').value
+    };
+    try {
+        const res = await fetch(`/api/admin/usuarios/${cedulaOriginal}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nuevas)
+        });
+        if (res.ok) {
+            mostrarNotificacion('Usuario actualizado');
+            cerrarModalEditarUsuario();
+            cargarUsuarios();
+        } else {
+            const err = await res.json();
+            alert(err.error || 'Error al actualizar');
         }
     } catch (e) { console.error(e); }
 });
 
 async function eliminarUsuario(cedula) {
-    if (!confirm('¿Desea dar de baja a este usuario?')) return;
+    if (!confirm(`¿Eliminar al usuario ${cedula}?`)) return;
     try {
         const res = await fetch(`/api/admin/usuarios/${cedula}`, { method: 'DELETE' });
-        if (res.ok) cargarUsuarios();
+        if (res.ok) {
+            mostrarNotificacion('Usuario eliminado');
+            cargarUsuarios();
+        } else {
+            alert('Error al eliminar');
+        }
     } catch (e) { console.error(e); }
 }
