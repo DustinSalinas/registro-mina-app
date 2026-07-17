@@ -7,7 +7,8 @@ let firmaCargadaBase64 = null;
 window.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
     initSignaturePad();
-    // Inicializar fecha y hora actuales
+
+    // Fecha y hora actuales
     const now = new Date();
     const yyyy = now.getFullYear();
     const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -17,12 +18,11 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('fecha').value = `${yyyy}-${mm}-${dd}`;
     document.getElementById('hora').value = `${hh}:${min}`;
 
-    // --- Listener para cuando el usuario CAMBIA la fecha manualmente ---
+    // --- Cuando el usuario cambia la fecha MANUALMENTE ---
     document.getElementById('fecha').addEventListener('change', function() {
         const cedula = document.getElementById('cedula').value.trim();
         if (cedula.length === 10) {
-            // Al cambiar la fecha, se consulta con esa fecha específica
-            autocompletar(cedula, this.value);
+            autocompletar(cedula, this.value); // Filtra por la fecha seleccionada
         }
     });
 
@@ -175,7 +175,11 @@ function toggleEditCategoria() {
     }
 }
 
-/* ---- Autocompletar (función central) ---- */
+// -------------------------------------------------------------
+// FUNCIÓN CENTRAL DE AUTOCOMPLETADO
+// - Si NO se pasa fecha, busca el último registro de la cédula (sin filtrar)
+// - Si se pasa fecha, busca el último registro de esa cédula en esa fecha
+// -------------------------------------------------------------
 async function autocompletar(cedula, fecha = null) {
     const loading = document.getElementById('loadingCedula');
     loading.classList.remove('hidden');
@@ -184,6 +188,7 @@ async function autocompletar(cedula, fecha = null) {
         if (fecha) {
             url += `&fecha=${fecha}`;
         }
+        console.log('Consultando:', url); // Para depuración
         const res = await fetch(url);
         const data = await res.json();
         if (data) {
@@ -199,7 +204,6 @@ async function autocompletar(cedula, fecha = null) {
             document.getElementById('destino').value = data.destino || '';
             document.getElementById('razon').value = data.razon || '';
 
-            // Cargar firma si existe
             if (data.firma) {
                 try {
                     const resFirma = await fetch(`/firmas/${data.firma}`);
@@ -219,6 +223,9 @@ async function autocompletar(cedula, fecha = null) {
             } else {
                 clearSignature();
             }
+        } else {
+            // Si no hay datos, limpiar campos (opcional)
+            console.log('No se encontraron registros para esta cédula');
         }
     } catch (e) {
         console.error(e);
@@ -227,11 +234,11 @@ async function autocompletar(cedula, fecha = null) {
     }
 }
 
-/* ---- Autocompletar al escribir la cédula (SIEMPRE sin filtrar por fecha) ---- */
+// ---- Autocompletar al escribir la cédula (NUNCA filtra por fecha) ----
 async function detectarCedulaCompleta() {
     const cedula = document.getElementById('cedula').value.trim();
     if (cedula.length === 10) {
-        // **CORRECCIÓN: se envía null para que NO filtre por fecha**
+        // IMPORTANTE: se pasa null para que NO filtre por fecha
         await autocompletar(cedula, null);
     }
 }
@@ -270,7 +277,7 @@ function logout() {
     document.getElementById('loginForm').reset();
 }
 
-/* ---- Guardar Registro (ahora envía fecha y hora manuales) ---- */
+/* ---- Guardar Registro ---- */
 document.getElementById('registroForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
