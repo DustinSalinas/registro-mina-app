@@ -18,15 +18,16 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('fecha').value = `${yyyy}-${mm}-${dd}`;
     document.getElementById('hora').value = `${hh}:${min}`;
 
-    // --- Evento: cambio manual de fecha (filtra por fecha) ---
+    // --- Cuando el usuario cambia la fecha MANUALMENTE ---
     document.getElementById('fecha').addEventListener('change', function() {
         const cedula = document.getElementById('cedula').value.trim();
         if (cedula.length === 10) {
-            autocompletar(cedula, this.value);
+            autocompletarPorCedula(cedula, this.value); // Filtra por la fecha seleccionada
         }
+        // También podríamos actualizar por placa si se quiere, pero no es necesario
     });
 
-    // --- Evento: autocompletar por placa ---
+    // --- Autocompletar por placa (siempre sin filtrar fecha) ---
     document.getElementById('placa').addEventListener('input', function() {
         const placa = this.value.trim();
         if (placa.length >= 3) { // mínimo 3 caracteres para buscar
@@ -183,8 +184,12 @@ function toggleEditCategoria() {
     }
 }
 
-/* ---- AUTOCOMPLETAR POR CÉDULA (central) ---- */
-async function autocompletar(cedula, fecha = null) {
+/* =============================================
+   AUTOCOMPLETADO POR CÉDULA
+   - Si no se pasa fecha, busca el último registro sin importar la fecha
+   - Si se pasa fecha, busca el último registro de esa fecha
+   ============================================= */
+async function autocompletarPorCedula(cedula, fecha = null) {
     const loading = document.getElementById('loadingCedula');
     loading.classList.remove('hidden');
     try {
@@ -192,13 +197,15 @@ async function autocompletar(cedula, fecha = null) {
         if (fecha) {
             url += `&fecha=${fecha}`;
         }
+        console.log('Consultando cédula:', url);
         const res = await fetch(url);
         const data = await res.json();
         if (data) {
             rellenarCampos(data);
         } else {
-            // Si no hay datos, limpiar campos (opcional)
             console.log('No se encontraron registros para esta cédula');
+            // Opcional: limpiar campos si no hay datos
+            limpiarCampos();
         }
     } catch (e) {
         console.error(e);
@@ -207,21 +214,26 @@ async function autocompletar(cedula, fecha = null) {
     }
 }
 
-/* ---- AUTOCOMPLETAR POR PLACA ---- */
+/* =============================================
+   AUTOCOMPLETADO POR PLACA (siempre sin fecha)
+   ============================================= */
 async function autocompletarPorPlaca(placa) {
     try {
-        const res = await fetch(`/api/autocompletar-placa?placa=${placa}`);
+        const url = `/api/autocompletar-placa?placa=${encodeURIComponent(placa)}`;
+        console.log('Consultando placa:', url);
+        const res = await fetch(url);
         const data = await res.json();
         if (data) {
-            // Si hay datos de esa placa, rellenamos todos los campos
             rellenarCampos(data);
+        } else {
+            console.log('No se encontraron registros para esta placa');
         }
     } catch (e) {
         console.error(e);
     }
 }
 
-/* ---- Función para rellenar campos a partir de un registro ---- */
+/* ---- Función para rellenar campos del formulario ---- */
 function rellenarCampos(data) {
     document.getElementById('cedula').value = data.cedula || '';
     document.getElementById('nombres').value = data.nombres || '';
@@ -238,14 +250,25 @@ function rellenarCampos(data) {
 
     // Cargar firma si existe
     if (data.firma) {
-        cargarFirma(data.firma);
+        cargarFirmaDesdeServidor(data.firma);
     } else {
         clearSignature();
     }
 }
 
-/* ---- Cargar firma desde archivo ---- */
-async function cargarFirma(nombreArchivo) {
+/* ---- Función para limpiar campos (opcional) ---- */
+function limpiarCampos() {
+    document.getElementById('nombres').value = '';
+    document.getElementById('categoria').value = '';
+    document.getElementById('placa').value = '';
+    document.getElementById('color').value = '';
+    document.getElementById('destino').value = '';
+    document.getElementById('razon').value = '';
+    clearSignature();
+}
+
+/* ---- Cargar firma desde el servidor ---- */
+async function cargarFirmaDesdeServidor(nombreArchivo) {
     try {
         const resFirma = await fetch(`/firmas/${nombreArchivo}`);
         const blob = await resFirma.blob();
@@ -260,14 +283,16 @@ async function cargarFirma(nombreArchivo) {
         reader.readAsDataURL(blob);
     } catch (e) {
         console.error('No se pudo cargar la firma anterior', e);
+        clearSignature();
     }
 }
 
-/* ---- Al escribir la cédula (sin filtrar por fecha) ---- */
+/* ---- Detectores desde los campos ---- */
 async function detectarCedulaCompleta() {
     const cedula = document.getElementById('cedula').value.trim();
     if (cedula.length === 10) {
-        await autocompletar(cedula, null); // SIN fecha
+        // IMPORTANTE: se pasa null para NO filtrar por fecha
+        await autocompletarPorCedula(cedula, null);
     }
 }
 
