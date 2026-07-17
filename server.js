@@ -93,7 +93,7 @@ app.delete('/api/admin/usuarios/:cedula', (req, res) => {
     res.sendStatus(200);
 });
 
-// --- REGISTROS DE ACCESO (ahora acepta fecha/hora manuales) ---
+// --- REGISTROS DE ACCESO ---
 app.get('/api/registros', (req, res) => {
     const db = readDB();
     const ordenados = [...db.registros].sort((a, b) => a.id - b.id);
@@ -104,7 +104,6 @@ app.post('/api/registros', (req, res) => {
     const { categoria, movimiento, cedula, nombres, placa, color, destino, razon, firma, fecha: fechaManual, hora: horaManual } = req.body;
     const db = readDB();
 
-    // Fecha: usar la enviada o generar automáticamente
     let fecha;
     if (fechaManual && /^\d{4}-\d{2}-\d{2}$/.test(fechaManual)) {
         fecha = fechaManual;
@@ -115,10 +114,8 @@ app.post('/api/registros', (req, res) => {
         fecha = localDate.toISOString().split('T')[0];
     }
 
-    // Hora: usar la enviada o generar automáticamente
     let hora;
     if (horaManual && /^\d{2}:\d{2}$/.test(horaManual)) {
-        // Convertir a formato 12h con AM/PM para mantener consistencia con el historial
         const [hh, mm] = horaManual.split(':');
         let horas = parseInt(hh);
         const ampm = horas >= 12 ? 'PM' : 'AM';
@@ -212,19 +209,27 @@ app.delete('/api/registros/:id', (req, res) => {
     }
 });
 
-// --- ENDPOINT MODIFICADO: acepta 'fecha' como parámetro opcional ---
+// --- AUTOCOMPLETAR POR CÉDULA (con filtro opcional de fecha) ---
 app.get('/api/autocompletar', (req, res) => {
     const { cedula, fecha } = req.query;
     const db = readDB();
     let registros = db.registros.filter(r => r.cedula === cedula);
-
-    // Si se proporciona fecha, filtrar por ella
     if (fecha) {
         registros = registros.filter(r => r.fecha === fecha);
     }
-
-    // Ordenar por id descendente y tomar el primero (más reciente)
     registros.sort((a, b) => b.id - a.id);
+    const registroMatch = registros[0] || null;
+    res.json(registroMatch);
+});
+
+// --- NUEVO: AUTOCOMPLETAR POR PLACA (sin filtrar por fecha) ---
+app.get('/api/autocompletar-placa', (req, res) => {
+    const { placa } = req.query;
+    const db = readDB();
+    if (!placa) return res.json(null);
+    const registros = db.registros
+        .filter(r => r.placa && r.placa.toLowerCase() === placa.toLowerCase())
+        .sort((a, b) => b.id - a.id);
     const registroMatch = registros[0] || null;
     res.json(registroMatch);
 });
