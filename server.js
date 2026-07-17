@@ -212,13 +212,21 @@ app.delete('/api/registros/:id', (req, res) => {
     }
 });
 
+// --- ENDPOINT MODIFICADO: acepta 'fecha' como parámetro opcional ---
 app.get('/api/autocompletar', (req, res) => {
-    const { cedula } = req.query;
+    const { cedula, fecha } = req.query;
     const db = readDB();
-    const registroMatch = db.registros
-        .filter(r => r.cedula === cedula)
-        .sort((a, b) => b.id - a.id)[0];
-    res.json(registroMatch || null);
+    let registros = db.registros.filter(r => r.cedula === cedula);
+
+    // Si se proporciona fecha, filtrar por ella
+    if (fecha) {
+        registros = registros.filter(r => r.fecha === fecha);
+    }
+
+    // Ordenar por id descendente y tomar el primero (más reciente)
+    registros.sort((a, b) => b.id - a.id);
+    const registroMatch = registros[0] || null;
+    res.json(registroMatch);
 });
 
 app.listen(PORT, '0.0.0.0', () => {
