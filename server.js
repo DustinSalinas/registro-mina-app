@@ -214,24 +214,25 @@ app.get('/api/autocompletar', (req, res) => {
     const { cedula, fecha } = req.query;
     const db = readDB();
     let registros = db.registros.filter(r => r.cedula === cedula);
+
     if (fecha) {
         registros = registros.filter(r => r.fecha === fecha);
     }
+
     registros.sort((a, b) => b.id - a.id);
     const registroMatch = registros[0] || null;
     res.json(registroMatch);
 });
 
-// --- NUEVO: AUTOCOMPLETAR POR PLACA (sin filtrar por fecha) ---
+// --- AUTOCOMPLETAR POR PLACA (siempre el último registro, sin filtrar fecha) ---
 app.get('/api/autocompletar-placa', (req, res) => {
     const { placa } = req.query;
     const db = readDB();
-    if (!placa) return res.json(null);
     const registros = db.registros
         .filter(r => r.placa && r.placa.toLowerCase() === placa.toLowerCase())
         .sort((a, b) => b.id - a.id);
-    const registroMatch = registros[0] || null;
-    res.json(registroMatch);
+    const match = registros[0] || null;
+    res.json(match);
 });
 
 app.listen(PORT, '0.0.0.0', () => {
