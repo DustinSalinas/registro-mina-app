@@ -18,11 +18,19 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('fecha').value = `${yyyy}-${mm}-${dd}`;
     document.getElementById('hora').value = `${hh}:${min}`;
 
-    // --- Cuando el usuario cambia la fecha MANUALMENTE ---
+    // --- Evento: cambio manual de fecha (filtra por fecha) ---
     document.getElementById('fecha').addEventListener('change', function() {
         const cedula = document.getElementById('cedula').value.trim();
         if (cedula.length === 10) {
-            autocompletar(cedula, this.value); // Filtra por la fecha seleccionada
+            autocompletar(cedula, this.value);
+        }
+    });
+
+    // --- Evento: autocompletar por placa ---
+    document.getElementById('placa').addEventListener('input', function() {
+        const placa = this.value.trim();
+        if (placa.length >= 3) { // mínimo 3 caracteres para buscar
+            autocompletarPorPlaca(placa);
         }
     });
 
@@ -175,11 +183,7 @@ function toggleEditCategoria() {
     }
 }
 
-// -------------------------------------------------------------
-// FUNCIÓN CENTRAL DE AUTOCOMPLETADO
-// - Si NO se pasa fecha, busca el último registro de la cédula (sin filtrar)
-// - Si se pasa fecha, busca el último registro de esa cédula en esa fecha
-// -------------------------------------------------------------
+/* ---- AUTOCOMPLETAR POR CÉDULA (central) ---- */
 async function autocompletar(cedula, fecha = null) {
     const loading = document.getElementById('loadingCedula');
     loading.classList.remove('hidden');
@@ -188,41 +192,10 @@ async function autocompletar(cedula, fecha = null) {
         if (fecha) {
             url += `&fecha=${fecha}`;
         }
-        console.log('Consultando:', url); // Para depuración
         const res = await fetch(url);
         const data = await res.json();
         if (data) {
-            document.getElementById('nombres').value = data.nombres || '';
-            document.getElementById('categoria').value = data.categoria || '';
-            toggleCategoria();
-            if (data.categoria === 'Vehiculo' || data.categoria === 'Volqueta') {
-                document.getElementById('placa').value = data.placa || '';
-                if (data.categoria === 'Volqueta') {
-                    document.getElementById('color').value = data.color || '';
-                }
-            }
-            document.getElementById('destino').value = data.destino || '';
-            document.getElementById('razon').value = data.razon || '';
-
-            if (data.firma) {
-                try {
-                    const resFirma = await fetch(`/firmas/${data.firma}`);
-                    const blob = await resFirma.blob();
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                        firmaCargadaBase64 = reader.result;
-                        const vista = document.getElementById('vistaFirmaSubida');
-                        vista.src = firmaCargadaBase64;
-                        vista.classList.remove('hidden');
-                        signaturePad.clear();
-                    };
-                    reader.readAsDataURL(blob);
-                } catch (e) {
-                    console.error('No se pudo cargar la firma anterior', e);
-                }
-            } else {
-                clearSignature();
-            }
+            rellenarCampos(data);
         } else {
             // Si no hay datos, limpiar campos (opcional)
             console.log('No se encontraron registros para esta cédula');
@@ -234,12 +207,67 @@ async function autocompletar(cedula, fecha = null) {
     }
 }
 
-// ---- Autocompletar al escribir la cédula (NUNCA filtra por fecha) ----
+/* ---- AUTOCOMPLETAR POR PLACA ---- */
+async function autocompletarPorPlaca(placa) {
+    try {
+        const res = await fetch(`/api/autocompletar-placa?placa=${placa}`);
+        const data = await res.json();
+        if (data) {
+            // Si hay datos de esa placa, rellenamos todos los campos
+            rellenarCampos(data);
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+/* ---- Función para rellenar campos a partir de un registro ---- */
+function rellenarCampos(data) {
+    document.getElementById('cedula').value = data.cedula || '';
+    document.getElementById('nombres').value = data.nombres || '';
+    document.getElementById('categoria').value = data.categoria || '';
+    toggleCategoria();
+    if (data.categoria === 'Vehiculo' || data.categoria === 'Volqueta') {
+        document.getElementById('placa').value = data.placa || '';
+        if (data.categoria === 'Volqueta') {
+            document.getElementById('color').value = data.color || '';
+        }
+    }
+    document.getElementById('destino').value = data.destino || '';
+    document.getElementById('razon').value = data.razon || '';
+
+    // Cargar firma si existe
+    if (data.firma) {
+        cargarFirma(data.firma);
+    } else {
+        clearSignature();
+    }
+}
+
+/* ---- Cargar firma desde archivo ---- */
+async function cargarFirma(nombreArchivo) {
+    try {
+        const resFirma = await fetch(`/firmas/${nombreArchivo}`);
+        const blob = await resFirma.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            firmaCargadaBase64 = reader.result;
+            const vista = document.getElementById('vistaFirmaSubida');
+            vista.src = firmaCargadaBase64;
+            vista.classList.remove('hidden');
+            signaturePad.clear();
+        };
+        reader.readAsDataURL(blob);
+    } catch (e) {
+        console.error('No se pudo cargar la firma anterior', e);
+    }
+}
+
+/* ---- Al escribir la cédula (sin filtrar por fecha) ---- */
 async function detectarCedulaCompleta() {
     const cedula = document.getElementById('cedula').value.trim();
     if (cedula.length === 10) {
-        // IMPORTANTE: se pasa null para que NO filtre por fecha
-        await autocompletar(cedula, null);
+        await autocompletar(cedula, null); // SIN fecha
     }
 }
 
